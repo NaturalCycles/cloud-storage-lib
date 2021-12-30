@@ -103,6 +103,18 @@ export class CommonStorageBucket {
     await this.cfg.storage.saveFile(this.cfg.bucketName, filePath, content)
   }
 
+  async saveStringFile(filePath: string, content: string): Promise<void> {
+    await this.cfg.storage.saveFile(this.cfg.bucketName, filePath, Buffer.from(content))
+  }
+
+  async saveJsonFile(filePath: string, content: any): Promise<void> {
+    await this.cfg.storage.saveFile(
+      this.cfg.bucketName,
+      filePath,
+      Buffer.from(JSON.stringify(content)),
+    )
+  }
+
   async saveFiles(entries: FileEntry[]): Promise<void> {
     await pMap(entries, async f => {
       await this.cfg.storage.saveFile(this.cfg.bucketName, f.filePath, f.content)

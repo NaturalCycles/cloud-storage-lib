@@ -106,4 +106,10 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
         ]),
       )
   }
+
+  async count(table: string): Promise<number> {
+    const { bucketName, prefix } = this.getBucketAndPrefix(table)
+
+    return (await this.cfg.storage.getFileNames(bucketName, prefix)).length
+  }
 }

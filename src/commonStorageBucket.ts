@@ -103,6 +103,16 @@ export class CommonStorageBucket {
     await this.cfg.storage.saveFile(this.cfg.bucketName, filePath, content)
   }
 
+  /**
+   * Convenience method that does:
+   * await saveFile
+   * await setFileVisibility
+   */
+  async savePublicFile(filePath: string, content: Buffer): Promise<void> {
+    await this.cfg.storage.saveFile(this.cfg.bucketName, filePath, content)
+    await this.cfg.storage.setFileVisibility(this.cfg.bucketName, filePath, true)
+  }
+
   async saveStringFile(filePath: string, content: string): Promise<void> {
     await this.cfg.storage.saveFile(this.cfg.bucketName, filePath, Buffer.from(content))
   }

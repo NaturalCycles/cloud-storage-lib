@@ -1,6 +1,6 @@
 import { Readable, Writable } from 'stream'
 import { AppError, pMap } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import { ReadableTyped, transformMapSimple } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 
 export interface CommonStorageBucketCfg {
@@ -145,12 +145,32 @@ export class CommonStorageBucket {
    * Important difference between `prefix` and `path` is that `prefix` will
    * return all files from sub-directories too!
    */
-  async getFileNames(prefix: string): Promise<string[]> {
-    return await this.cfg.storage.getFileNames(this.cfg.bucketName, prefix)
+  async getFileNames(prefix: string, opt: { fullPath?: boolean } = {}): Promise<string[]> {
+    const { fullPath = true } = opt
+    const names = await this.cfg.storage.getFileNames(this.cfg.bucketName, prefix)
+
+    if (!fullPath && prefix) {
+      const start = `${prefix}/`.length
+      return names.map(n => n.slice(start))
+    }
+
+    return names
   }
 
-  getFileNamesStream(prefix: string, opt?: CommonStorageGetOptions): ReadableTyped<string> {
-    return this.cfg.storage.getFileNamesStream(this.cfg.bucketName, prefix, opt)
+  getFileNamesStream(
+    prefix: string,
+    opt: CommonStorageGetOptions & { fullPath?: boolean } = {},
+  ): ReadableTyped<string> {
+    const { fullPath = true } = opt
+
+    if (fullPath || !prefix) {
+      return this.cfg.storage.getFileNamesStream(this.cfg.bucketName, prefix, opt)
+    }
+
+    const start = `${prefix}/`.length
+    return this.cfg.storage
+      .getFileNamesStream(this.cfg.bucketName, prefix, opt)
+      .pipe(transformMapSimple<string, string>(f => f.slice(start)))
   }
 
   getFilesStream(prefix: string, opt?: CommonStorageGetOptions): ReadableTyped<FileEntry> {

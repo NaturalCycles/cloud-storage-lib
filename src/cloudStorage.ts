@@ -1,7 +1,7 @@
 import * as Buffer from 'buffer'
 import { Readable, Writable } from 'stream'
 import { _substringAfterLast } from '@naturalcycles/js-lib'
-import { Bucket, File, Storage } from '@google-cloud/storage'
+import { File, Storage } from '@google-cloud/storage'
 import { ReadableTyped, transformMap, transformMapSimple } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 import { GCPServiceAccount } from './model'
@@ -20,8 +20,14 @@ export interface CloudStorageCfg {
 }
 
 export class CloudStorage implements CommonStorage {
-  constructor(public cfg: CloudStorageCfg) {
-    this.storage = new Storage({
+  /**
+   * Passing the pre-created Storage allows to instantiate it from both
+   * GCP Storage and FirebaseStorage.
+   */
+  constructor(public storage: Storage) {}
+
+  static createFromGCPServiceAccount(cfg: CloudStorageCfg): CloudStorage {
+    const storage = new Storage({
       credentials: cfg.credentials,
       // Explicitly passing it here to fix this error:
       // Error: Unable to detect a Project Id in the current environment.
@@ -30,29 +36,12 @@ export class CloudStorage implements CommonStorage {
       //     at /root/repo/node_modules/google-auth-library/build/src/auth/googleauth.js:95:31
       projectId: cfg.credentials.project_id,
     })
+
+    return new CloudStorage(storage)
   }
-
-  storage: Storage
-
-  // async createBucket(bucketName: string): Promise<void> {
-  //   const bucket = await this.storage.createBucket(bucketName)
-  //   console.log(bucket) // debugging
-  // }
 
   async ping(bucketName?: string): Promise<void> {
     await this.storage.bucket(bucketName || 'non-existing-for-sure').exists()
-  }
-
-  async getBucketNames(opt: CommonStorageGetOptions = {}): Promise<string[]> {
-    const [buckets] = await this.storage.getBuckets({
-      maxResults: opt.limit,
-    })
-
-    return buckets.map(b => b.name)
-  }
-
-  getBucketNamesStream(): ReadableTyped<string> {
-    return this.storage.getBucketsStream().pipe(transformMapSimple<Bucket, string>(b => b.name))
   }
 
   async deletePath(bucketName: string, prefix: string): Promise<void> {

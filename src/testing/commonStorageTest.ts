@@ -38,18 +38,18 @@ export function runCommonStorageTest(storage: CommonStorage, bucketName: string)
   // })
 
   test('ping', async () => {
-    await storage.ping()
+    await storage.ping(bucketName)
   })
 
-  test('listBuckets', async () => {
-    const buckets = await storage.getBucketNames()
-    console.log(buckets)
-  })
-
-  test('streamBuckets', async () => {
-    const buckets = await readableToArray(storage.getBucketNamesStream())
-    console.log(buckets)
-  })
+  // test('listBuckets', async () => {
+  //   const buckets = await storage.getBucketNames()
+  //   console.log(buckets)
+  // })
+  //
+  // test('streamBuckets', async () => {
+  //   const buckets = await readableToArray(storage.getBucketNamesStream())
+  //   console.log(buckets)
+  // })
 
   test('prepare: clear bucket', async () => {
     await pMap(
@@ -58,18 +58,20 @@ export function runCommonStorageTest(storage: CommonStorage, bucketName: string)
     )
   })
 
-  test('listFileNames on root should return empty', async () => {
-    const fileNames = await storage.getFileNames(bucketName)
-    expect(fileNames).toEqual([])
-  })
+  // test('listFileNames on root should return empty', async () => {
+  //   const fileNames = await storage.getFileNames(bucketName)
+  //   expect(fileNames).toEqual([])
+  // })
 
   test(`listFileNames on ${TEST_FOLDER} should return empty`, async () => {
     const fileNames = await storage.getFileNames(bucketName, { prefix: TEST_FOLDER })
     expect(fileNames).toEqual([])
   })
 
-  test('streamFileNames on root should return empty', async () => {
-    const fileNames = await readableToArray(storage.getFileNamesStream(bucketName))
+  test(`streamFileNames on ${TEST_FOLDER} should return empty`, async () => {
+    const fileNames = await readableToArray(
+      storage.getFileNamesStream(bucketName, { prefix: TEST_FOLDER }),
+    )
     expect(fileNames).toEqual([])
   })
 
@@ -117,7 +119,7 @@ export function runCommonStorageTest(storage: CommonStorage, bucketName: string)
   })
 
   test('cleanup', async () => {
-    await storage.deletePath(bucketName, '')
+    await storage.deletePath(bucketName, TEST_FOLDER)
   })
 
   // Cannot update access control for an object when uniform bucket-level access is enabled. Read more at https://cloud.google.com/storage/docs/uniform-bucket-level-access

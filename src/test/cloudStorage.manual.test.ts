@@ -9,7 +9,7 @@ const { bucketName, GCP_SERVICE_ACCOUNT: serviceAccountStr } = requireEnvKeys(
 )
 const serviceAccount: GCPServiceAccount = JSON.parse(serviceAccountStr)
 
-const storage = new CloudStorage({
+const storage = CloudStorage.createFromGCPServiceAccount({
   credentials: serviceAccount,
 })
 
@@ -41,11 +41,6 @@ const storage = new CloudStorage({
 // }))
 
 describe(`runCommonStorageTest`, () => runCommonStorageTest(storage, bucketName))
-
-test('listBuckets', async () => {
-  const buckets = await storage.getBucketNames()
-  console.log(buckets)
-})
 
 /*
 test('listFiles', async () => {

@@ -48,13 +48,6 @@ export interface CommonStorage {
   ping(bucketName?: string): Promise<void>
 
   /**
-   * Often needs a special permission.
-   */
-  getBucketNames(opt?: CommonStorageGetOptions): Promise<string[]>
-
-  getBucketNamesStream(): ReadableTyped<string>
-
-  /**
    * Creates a new bucket by given name.
    * todo: check what to do if it already exists
    */

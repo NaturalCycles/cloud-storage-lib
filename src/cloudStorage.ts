@@ -1,5 +1,6 @@
 import * as Buffer from 'buffer'
 import { Readable, Writable } from 'stream'
+import { _substringAfterLast } from '@naturalcycles/js-lib'
 import { Bucket, File, Storage } from '@google-cloud/storage'
 import { ReadableTyped, transformMap, transformMapSimple } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
@@ -67,32 +68,38 @@ export class CloudStorage implements CommonStorage {
     return exists
   }
 
-  async getFileNames(bucketName: string, prefix: string): Promise<string[]> {
+  async getFileNames(bucketName: string, opt: CommonStorageGetOptions = {}): Promise<string[]> {
+    const { prefix, fullPaths = true } = opt
     const [files] = await this.storage.bucket(bucketName).getFiles({
       prefix,
     })
-    return files.map(f => f.name)
+
+    if (fullPaths) {
+      return files.map(f => f.name)
+    }
+
+    return files.map(f => _substringAfterLast(f.name, '/'))
   }
 
-  getFileNamesStream(
-    bucketName: string,
-    prefix: string,
-    opt: CommonStorageGetOptions = {},
-  ): ReadableTyped<string> {
+  getFileNamesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<string> {
+    const { prefix, fullPaths = true } = opt
+
     return this.storage
       .bucket(bucketName)
       .getFilesStream({
         prefix,
         maxResults: opt.limit,
       })
-      .pipe(transformMapSimple<File, string>(f => f.name))
+      .pipe(
+        transformMapSimple<File, string>(f =>
+          fullPaths ? f.name : _substringAfterLast(f.name, '/'),
+        ),
+      )
   }
 
-  getFilesStream(
-    bucketName: string,
-    prefix: string,
-    opt: CommonStorageGetOptions = {},
-  ): ReadableTyped<FileEntry> {
+  getFilesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<FileEntry> {
+    const { prefix } = opt
+
     return this.storage
       .bucket(bucketName)
       .getFilesStream({

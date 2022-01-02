@@ -9,4 +9,4 @@ const db = new CommonStorageKeyValueDB({
   bucketName: 'TEST_BUCKET',
 })
 
-describe(`runCommonStorageTest`, () => runCommonKeyValueDBTest(db))
+describe(`runCommonStorageKeyValueDBTest`, () => runCommonKeyValueDBTest(db))

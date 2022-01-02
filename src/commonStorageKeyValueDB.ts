@@ -78,30 +78,26 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
 
   streamIds(table: string, limit?: number): ReadableTyped<string> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
-    const index = prefix.length + 1
 
-    return this.cfg.storage
-      .getFileNamesStream(bucketName, prefix, { limit })
-      .pipe(transformMapSimple<string, string>(f => f.slice(index)))
+    return this.cfg.storage.getFileNamesStream(bucketName, { prefix, limit, fullPaths: false })
   }
 
   streamValues(table: string, limit?: number): ReadableTyped<Buffer> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
 
     return this.cfg.storage
-      .getFilesStream(bucketName, prefix, { limit })
+      .getFilesStream(bucketName, { prefix, limit })
       .pipe(transformMapSimple<FileEntry, Buffer>(f => f.content))
   }
 
   streamEntries(table: string, limit?: number): ReadableTyped<KeyValueDBTuple> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
-    const index = prefix.length + 1
 
     return this.cfg.storage
-      .getFilesStream(bucketName, prefix, { limit })
+      .getFilesStream(bucketName, { prefix, limit, fullPaths: false })
       .pipe(
         transformMapSimple<FileEntry, KeyValueDBTuple>(({ filePath, content }) => [
-          filePath.slice(index),
+          filePath,
           content,
         ]),
       )
@@ -110,6 +106,6 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
   async count(table: string): Promise<number> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
 
-    return (await this.cfg.storage.getFileNames(bucketName, prefix)).length
+    return (await this.cfg.storage.getFileNames(bucketName, { prefix })).length
   }
 }

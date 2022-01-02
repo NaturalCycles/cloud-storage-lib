@@ -1,5 +1,5 @@
 import { Readable, Writable } from 'stream'
-import { StringMap } from '@naturalcycles/js-lib'
+import { _substringAfterLast, StringMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 
@@ -42,32 +42,36 @@ export class InMemoryCommonStorage implements CommonStorage {
     })
   }
 
-  async getFileNames(bucketName: string, prefix: string): Promise<string[]> {
-    return Object.keys(this.data[bucketName] || {}).filter(filePath => filePath.startsWith(prefix))
+  async getFileNames(bucketName: string, opt: CommonStorageGetOptions = {}): Promise<string[]> {
+    const { prefix = '', fullPaths = true } = opt
+    return Object.keys(this.data[bucketName] || {})
+      .filter(filePath => filePath.startsWith(prefix))
+      .map(f => (fullPaths ? f : _substringAfterLast(f, '/')))
   }
 
-  getFileNamesStream(
-    bucketName: string,
-    prefix: string,
-    opt: CommonStorageGetOptions = {},
-  ): ReadableTyped<string> {
+  getFileNamesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<string> {
+    const { prefix = '', fullPaths = true } = opt
+
     return Readable.from(
       Object.keys(this.data[bucketName] || {})
         .filter(filePath => filePath.startsWith(prefix))
-        .slice(0, opt.limit),
+        .slice(0, opt.limit)
+        .map(n => (fullPaths ? n : _substringAfterLast(n, '/'))),
     )
   }
 
-  getFilesStream(
-    bucketName: string,
-    prefix: string,
-    opt: CommonStorageGetOptions = {},
-  ): ReadableTyped<FileEntry> {
+  getFilesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<FileEntry> {
+    const { prefix = '', fullPaths = true } = opt
+
     return Readable.from(
       Object.entries(this.data[bucketName] || {})
-        .map(([filePath, content]) => ({ filePath, content }))
+        .map(([filePath, content]) => ({
+          filePath,
+          content,
+        }))
         .filter(f => f.filePath.startsWith(prefix))
-        .slice(0, opt.limit),
+        .slice(0, opt.limit)
+        .map(f => (fullPaths ? f : { ...f, filePath: _substringAfterLast(f.filePath, '/') })),
     )
   }
 

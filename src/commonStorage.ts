@@ -15,6 +15,12 @@ export interface CommonStorageGetOptions {
   prefix?: string
 
   /**
+   * Defaults to true.
+   * Set to false to return file names instead of full paths.
+   */
+  fullPaths?: boolean
+
+  /**
    * Limits the number of results.
    *
    * By default it's unlimited.
@@ -76,19 +82,11 @@ export interface CommonStorage {
    * Important difference between `prefix` and `path` is that `prefix` will
    * return all files from sub-directories too!
    */
-  getFileNames(bucketName: string, prefix: string): Promise<string[]>
+  getFileNames(bucketName: string, opt?: CommonStorageGetOptions): Promise<string[]>
 
-  getFileNamesStream(
-    bucketName: string,
-    prefix: string,
-    opt?: CommonStorageGetOptions,
-  ): ReadableTyped<string>
+  getFileNamesStream(bucketName: string, opt?: CommonStorageGetOptions): ReadableTyped<string>
 
-  getFilesStream(
-    bucketName: string,
-    prefix: string,
-    opt?: CommonStorageGetOptions,
-  ): ReadableTyped<FileEntry>
+  getFilesStream(bucketName: string, opt?: CommonStorageGetOptions): ReadableTyped<FileEntry>
 
   getFileReadStream(bucketName: string, filePath: string): Readable
 

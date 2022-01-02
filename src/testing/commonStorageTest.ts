@@ -1,4 +1,4 @@
-import { _range, pMap, StringMap } from '@naturalcycles/js-lib'
+import { _range, _substringAfterLast, pMap, StringMap } from '@naturalcycles/js-lib'
 import { readableToArray } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, FileEntry } from '../commonStorage'
 
@@ -59,17 +59,17 @@ export function runCommonStorageTest(storage: CommonStorage, bucketName: string)
   })
 
   test('listFileNames on root should return empty', async () => {
-    const fileNames = await storage.getFileNames(bucketName, '')
+    const fileNames = await storage.getFileNames(bucketName)
     expect(fileNames).toEqual([])
   })
 
   test(`listFileNames on ${TEST_FOLDER} should return empty`, async () => {
-    const fileNames = await storage.getFileNames(bucketName, TEST_FOLDER)
+    const fileNames = await storage.getFileNames(bucketName, { prefix: TEST_FOLDER })
     expect(fileNames).toEqual([])
   })
 
   test('streamFileNames on root should return empty', async () => {
-    const fileNames = await readableToArray(storage.getFileNamesStream(bucketName, ''))
+    const fileNames = await readableToArray(storage.getFileNamesStream(bucketName))
     expect(fileNames).toEqual([])
   })
 
@@ -86,11 +86,19 @@ export function runCommonStorageTest(storage: CommonStorage, bucketName: string)
     // It's done in the same test to ensure "strong consistency"
     await pMap(TEST_FILES, async f => await storage.saveFile(bucketName, f.filePath, f.content))
 
-    const fileNames = await storage.getFileNames(bucketName, TEST_FOLDER)
+    const fileNamesShort = await storage.getFileNames(bucketName, {
+      prefix: TEST_FOLDER,
+      fullPaths: false,
+    })
+    expect(fileNamesShort.sort()).toEqual(
+      TEST_FILES.map(f => _substringAfterLast(f.filePath, '/')).sort(),
+    )
+
+    const fileNames = await storage.getFileNames(bucketName, { prefix: TEST_FOLDER })
     expect(fileNames.sort()).toEqual(TEST_FILES.map(f => f.filePath).sort())
 
     const streamedFileNames = await readableToArray(
-      storage.getFileNamesStream(bucketName, TEST_FOLDER),
+      storage.getFileNamesStream(bucketName, { prefix: TEST_FOLDER }),
     )
     expect(streamedFileNames.sort()).toEqual(TEST_FILES.map(f => f.filePath).sort())
 

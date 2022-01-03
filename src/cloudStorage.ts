@@ -87,7 +87,7 @@ export class CloudStorage implements CommonStorage {
   }
 
   getFilesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<FileEntry> {
-    const { prefix } = opt
+    const { prefix, fullPaths = true } = opt
 
     return this.storage
       .bucket(bucketName)
@@ -98,7 +98,7 @@ export class CloudStorage implements CommonStorage {
       .pipe(
         transformMap<File, FileEntry>(async f => {
           const [content] = await f.download()
-          return { filePath: f.name, content }
+          return { filePath: fullPaths ? f.name : _substringAfterLast(f.name, '/'), content }
         }),
       )
   }

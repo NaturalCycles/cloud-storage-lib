@@ -1,7 +1,6 @@
-import * as Buffer from 'buffer'
 import { Readable, Writable } from 'stream'
 import { _substringAfterLast } from '@naturalcycles/js-lib'
-import { File, Storage } from '@google-cloud/storage'
+import { File, Storage, StorageOptions } from '@google-cloud/storage'
 import { ReadableTyped, transformMap, transformMapSimple } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 import { GCPServiceAccount } from './model'
@@ -16,7 +15,10 @@ import { GCPServiceAccount } from './model'
  * (either personal one or non-personal).
  */
 export interface CloudStorageCfg {
-  credentials: GCPServiceAccount
+  /**
+   * It's optional, to allow automatic credentials in AppEngine, or GOOGLE_APPLICATION_CREDENTIALS.
+   */
+  credentials?: GCPServiceAccount
 }
 
 export class CloudStorage implements CommonStorage {
@@ -34,9 +36,14 @@ export class CloudStorage implements CommonStorage {
       // To learn more about authentication and Google APIs, visit:
       // https://cloud.google.com/docs/authentication/getting-started
       //     at /root/repo/node_modules/google-auth-library/build/src/auth/googleauth.js:95:31
-      projectId: cfg.credentials.project_id,
+      projectId: cfg.credentials?.project_id,
     })
 
+    return new CloudStorage(storage)
+  }
+
+  static createFromStorageOptions(storageOptions?: StorageOptions): CloudStorage {
+    const storage = new Storage(storageOptions)
     return new CloudStorage(storage)
   }
 

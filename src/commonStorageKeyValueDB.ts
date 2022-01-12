@@ -1,4 +1,3 @@
-import * as Buffer from 'buffer'
 import { CommonDBCreateOptions, CommonKeyValueDB, KeyValueDBTuple } from '@naturalcycles/db-lib'
 import { pMap, StringMap } from '@naturalcycles/js-lib'
 import { ReadableTyped, transformMapSimple } from '@naturalcycles/nodejs-lib'

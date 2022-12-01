@@ -1,4 +1,4 @@
-import { Readable, Writable } from 'stream'
+import { Readable, Writable } from 'node:stream'
 import { _substringAfterLast } from '@naturalcycles/js-lib'
 import { File, Storage, StorageOptions } from '@google-cloud/storage'
 import { ReadableTyped, transformMap, transformMapSimple } from '@naturalcycles/nodejs-lib'

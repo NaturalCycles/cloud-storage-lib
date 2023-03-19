@@ -45,7 +45,7 @@ export interface CommonStorage {
    *
    * Pass `bucketName` in case you only have permissions to operate on that bucket.
    */
-  ping(bucketName?: string): Promise<void>
+  ping: (bucketName?: string) => Promise<void>
 
   /**
    * Creates a new bucket by given name.
@@ -53,16 +53,16 @@ export interface CommonStorage {
    */
   // createBucket(bucketName: string): Promise<void>
 
-  fileExists(bucketName: string, filePath: string): Promise<boolean>
+  fileExists: (bucketName: string, filePath: string) => Promise<boolean>
 
-  getFile(bucketName: string, filePath: string): Promise<Buffer | null>
+  getFile: (bucketName: string, filePath: string) => Promise<Buffer | null>
 
-  saveFile(bucketName: string, filePath: string, content: Buffer): Promise<void>
+  saveFile: (bucketName: string, filePath: string, content: Buffer) => Promise<void>
 
   /**
    * Should recursively delete all files in a folder, if path is a folder.
    */
-  deletePath(bucketName: string, prefix: string): Promise<void>
+  deletePath: (bucketName: string, prefix: string) => Promise<void>
 
   /**
    * Returns an array of strings which are file paths.
@@ -75,20 +75,30 @@ export interface CommonStorage {
    * Important difference between `prefix` and `path` is that `prefix` will
    * return all files from sub-directories too!
    */
-  getFileNames(bucketName: string, opt?: CommonStorageGetOptions): Promise<string[]>
+  getFileNames: (bucketName: string, opt?: CommonStorageGetOptions) => Promise<string[]>
 
-  getFileNamesStream(bucketName: string, opt?: CommonStorageGetOptions): ReadableTyped<string>
+  getFileNamesStream: (bucketName: string, opt?: CommonStorageGetOptions) => ReadableTyped<string>
 
-  getFilesStream(bucketName: string, opt?: CommonStorageGetOptions): ReadableTyped<FileEntry>
+  getFilesStream: (bucketName: string, opt?: CommonStorageGetOptions) => ReadableTyped<FileEntry>
 
-  getFileReadStream(bucketName: string, filePath: string): Readable
+  getFileReadStream: (bucketName: string, filePath: string) => Readable
 
-  getFileWriteStream(bucketName: string, filePath: string): Writable
+  getFileWriteStream: (bucketName: string, filePath: string) => Writable
 
-  setFileVisibility(bucketName: string, filePath: string, isPublic: boolean): Promise<void>
+  setFileVisibility: (bucketName: string, filePath: string, isPublic: boolean) => Promise<void>
 
-  getFileVisibility(bucketName: string, filePath: string): Promise<boolean>
+  getFileVisibility: (bucketName: string, filePath: string) => Promise<boolean>
 
-  copyFile(fromBucket: string, fromPath: string, toPath: string, toBucket?: string): Promise<void>
-  moveFile(fromBucket: string, fromPath: string, toPath: string, toBucket?: string): Promise<void>
+  copyFile: (
+    fromBucket: string,
+    fromPath: string,
+    toPath: string,
+    toBucket?: string,
+  ) => Promise<void>
+  moveFile: (
+    fromBucket: string,
+    fromPath: string,
+    toPath: string,
+    toBucket?: string,
+  ) => Promise<void>
 }

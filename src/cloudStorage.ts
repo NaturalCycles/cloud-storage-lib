@@ -5,6 +5,12 @@ import { ReadableTyped, transformMap, transformMapSimple } from '@naturalcycles/
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 import { GCPServiceAccount } from './model'
 
+export {
+  // This is the latest version, to be imported by consumers
+  Storage,
+  type StorageOptions,
+}
+
 /**
  * This object is intentionally made to NOT extend StorageOptions,
  * because StorageOptions is complicated and provides just too many ways

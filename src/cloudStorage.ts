@@ -1,6 +1,6 @@
 import { Readable, Writable } from 'node:stream'
-import { _substringAfterLast } from '@naturalcycles/js-lib'
 import { File, Storage, StorageOptions } from '@google-cloud/storage'
+import { _substringAfterLast } from '@naturalcycles/js-lib'
 import { ReadableTyped, transformMap, transformMapSimple } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 import { GCPServiceAccount } from './model'
@@ -90,7 +90,7 @@ export class CloudStorage implements CommonStorage {
       .bucket(bucketName)
       .getFilesStream({
         prefix,
-        maxResults: opt.limit,
+        maxResults: opt.limit || undefined,
       })
       .pipe(
         transformMapSimple<File, string>(f =>
@@ -106,7 +106,7 @@ export class CloudStorage implements CommonStorage {
       .bucket(bucketName)
       .getFilesStream({
         prefix,
-        maxResults: opt.limit,
+        maxResults: opt.limit || undefined,
       })
       .pipe(
         transformMap<File, FileEntry>(async f => {

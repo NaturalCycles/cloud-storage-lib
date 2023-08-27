@@ -24,6 +24,8 @@ export interface CommonStorageGetOptions {
    * Limits the number of results.
    *
    * By default it's unlimited.
+   *
+   * 0 is treated as `undefined`.
    */
   limit?: number
 }

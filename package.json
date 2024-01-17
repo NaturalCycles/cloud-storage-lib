@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.0.0",
-    "@naturalcycles/db-lib": "^8.25.0",
+    "@naturalcycles/db-lib": "^9.1.0",
     "@naturalcycles/js-lib": "^14.41.0",
     "@naturalcycles/nodejs-lib": "^13.1.0"
   },

@@ -8,13 +8,7 @@ import {
   pMap,
   SKIP,
 } from '@naturalcycles/js-lib'
-import {
-  _pipeline,
-  ReadableTyped,
-  transformMap,
-  transformMapSync,
-  writableForEach,
-} from '@naturalcycles/nodejs-lib'
+import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 import { GCPServiceAccount } from './model'
 
@@ -114,33 +108,33 @@ export class CloudStorage implements CommonStorage {
   getFileNamesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<string> {
     const { prefix, fullPaths = true } = opt
 
-    return this.storage
-      .bucket(bucketName)
-      .getFilesStream({
+    return (
+      this.storage.bucket(bucketName).getFilesStream({
         prefix,
         maxResults: opt.limit || undefined,
-      })
-      .pipe(transformMapSync<File, string>(f => this.normalizeFilename(f.name, fullPaths)))
+      }) as ReadableTyped<File>
+    ).flatMap(f => {
+      const r = this.normalizeFilename(f.name, fullPaths)
+      if (r === SKIP) return []
+      return [r]
+    })
   }
 
   getFilesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<FileEntry> {
     const { prefix, fullPaths = true } = opt
 
-    return this.storage
-      .bucket(bucketName)
-      .getFilesStream({
+    return (
+      this.storage.bucket(bucketName).getFilesStream({
         prefix,
         maxResults: opt.limit || undefined,
-      })
-      .pipe(
-        transformMap<File, FileEntry>(async f => {
-          const filePath = this.normalizeFilename(f.name, fullPaths)
-          if (filePath === SKIP) return SKIP
+      }) as ReadableTyped<File>
+    ).flatMap(async f => {
+      const filePath = this.normalizeFilename(f.name, fullPaths)
+      if (filePath === SKIP) return []
 
-          const [content] = await f.download()
-          return { filePath, content }
-        }),
-      )
+      const [content] = await f.download()
+      return [{ filePath, content }] as FileEntry[]
+    })
   }
 
   async getFile(bucketName: string, filePath: string): Promise<Buffer | null> {
@@ -224,16 +218,16 @@ export class CloudStorage implements CommonStorage {
     _assert(fromPrefix.endsWith('/'), 'fromPrefix should end with `/`')
     _assert(toPrefix.endsWith('/'), 'toPrefix should end with `/`')
 
-    await _pipeline([
-      this.storage.bucket(fromBucket).getFilesStream({
+    await this.storage
+      .bucket(fromBucket)
+      .getFilesStream({
         prefix: fromPrefix,
-      }),
-      writableForEach<File>(async file => {
+      })
+      .forEach(async file => {
         const { name } = file
         const newName = toPrefix + name.slice(fromPrefix.length)
         await file.move(this.storage.bucket(toBucket || fromBucket).file(newName))
-      }),
-    ])
+      })
   }
 
   async combine(

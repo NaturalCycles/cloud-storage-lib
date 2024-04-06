@@ -1,7 +1,7 @@
 import { CommonDBCreateOptions, CommonKeyValueDB, KeyValueDBTuple } from '@naturalcycles/db-lib'
 import { pMap, StringMap } from '@naturalcycles/js-lib'
-import { ReadableTyped, transformMapSimple } from '@naturalcycles/nodejs-lib'
-import { CommonStorage, FileEntry } from './commonStorage'
+import { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import { CommonStorage } from './commonStorage'
 
 export interface CommonStorageKeyValueDBCfg {
   storage: CommonStorage
@@ -84,9 +84,7 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
   streamValues(table: string, limit?: number): ReadableTyped<Buffer> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
 
-    return this.cfg.storage
-      .getFilesStream(bucketName, { prefix, limit })
-      .pipe(transformMapSimple<FileEntry, Buffer>(f => f.content))
+    return this.cfg.storage.getFilesStream(bucketName, { prefix, limit }).map(f => f.content)
   }
 
   streamEntries(table: string, limit?: number): ReadableTyped<KeyValueDBTuple> {
@@ -94,12 +92,7 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
 
     return this.cfg.storage
       .getFilesStream(bucketName, { prefix, limit, fullPaths: false })
-      .pipe(
-        transformMapSimple<FileEntry, KeyValueDBTuple>(({ filePath, content }) => [
-          filePath,
-          content,
-        ]),
-      )
+      .map(f => [f.filePath, f.content] satisfies KeyValueDBTuple)
   }
 
   async count(table: string): Promise<number> {

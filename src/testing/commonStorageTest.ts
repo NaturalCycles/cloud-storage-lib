@@ -1,5 +1,4 @@
 import { _range, _substringAfterLast, pMap, StringMap } from '@naturalcycles/js-lib'
-import { readableToArray } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, FileEntry } from '../commonStorage'
 
 const TEST_FOLDER = 'test/subdir'
@@ -69,9 +68,9 @@ export function runCommonStorageTest(storage: CommonStorage, bucketName: string)
   })
 
   test(`streamFileNames on ${TEST_FOLDER} should return empty`, async () => {
-    const fileNames = await readableToArray(
-      storage.getFileNamesStream(bucketName, { prefix: TEST_FOLDER }),
-    )
+    const fileNames = await storage
+      .getFileNamesStream(bucketName, { prefix: TEST_FOLDER })
+      .toArray()
     expect(fileNames).toEqual([])
   })
 
@@ -99,9 +98,9 @@ export function runCommonStorageTest(storage: CommonStorage, bucketName: string)
     const fileNames = await storage.getFileNames(bucketName, { prefix: TEST_FOLDER })
     expect(fileNames.sort()).toEqual(TEST_FILES.map(f => f.filePath).sort())
 
-    const streamedFileNames = await readableToArray(
-      storage.getFileNamesStream(bucketName, { prefix: TEST_FOLDER }),
-    )
+    const streamedFileNames = await storage
+      .getFileNamesStream(bucketName, { prefix: TEST_FOLDER })
+      .toArray()
     expect(streamedFileNames.sort()).toEqual(TEST_FILES.map(f => f.filePath).sort())
 
     const filesMap: StringMap<Buffer> = {}

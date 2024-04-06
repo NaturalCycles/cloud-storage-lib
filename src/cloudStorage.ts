@@ -5,6 +5,7 @@ import {
   _substringAfterLast,
   localTime,
   LocalTimeInput,
+  pMap,
   SKIP,
 } from '@naturalcycles/js-lib'
 import {
@@ -75,10 +76,18 @@ export class CloudStorage implements CommonStorage {
   }
 
   async deletePath(bucketName: string, prefix: string): Promise<void> {
-    await this.storage.bucket(bucketName).deleteFiles({
-      prefix,
-      // to keep going in case error occurs, similar to THROW_AGGREGATED
-      force: true,
+    await this.deletePaths(bucketName, [prefix])
+  }
+
+  async deletePaths(bucketName: string, prefixes: string[]): Promise<void> {
+    const bucket = this.storage.bucket(bucketName)
+
+    await pMap(prefixes, async prefix => {
+      await bucket.deleteFiles({
+        prefix,
+        // to keep going in case error occurs, similar to THROW_AGGREGATED
+        force: true,
+      })
     })
   }
 
@@ -227,6 +236,23 @@ export class CloudStorage implements CommonStorage {
     ])
   }
 
+  async combine(
+    bucketName: string,
+    filePaths: string[],
+    toPath: string,
+    toBucket?: string,
+  ): Promise<void> {
+    // todo: if (filePaths.length > 32) - use recursive algorithm
+    _assert(filePaths.length <= 32, 'combine supports up to 32 input files')
+
+    await this.storage
+      .bucket(bucketName)
+      .combine(filePaths, this.storage.bucket(toBucket || bucketName).file(toPath))
+
+    // Delete original files
+    await this.deletePaths(bucketName, filePaths)
+  }
+
   /**
    * Acquires a "signed url", which allows bearer to use it to download ('read') the file.
    *
@@ -244,6 +270,7 @@ export class CloudStorage implements CommonStorage {
       .file(filePath)
       .getSignedUrl({
         action: 'read',
+        version: 'v4',
         expires: localTime(expires).unixMillis(),
       })
 

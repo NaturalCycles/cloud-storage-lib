@@ -1,4 +1,5 @@
 import { Readable, Writable } from 'node:stream'
+import { LocalTimeInput } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 
 export interface FileEntry {
@@ -66,6 +67,8 @@ export interface CommonStorage {
    */
   deletePath: (bucketName: string, prefix: string) => Promise<void>
 
+  deletePaths: (bucketName: string, prefixes: string[]) => Promise<void>
+
   /**
    * Returns an array of strings which are file paths.
    * Files that are not found by the path are not present in the map.
@@ -122,4 +125,26 @@ export interface CommonStorage {
     toPrefix: string,
     toBucket?: string,
   ) => Promise<void>
+
+  /**
+   * Combine (compose) multiple input files into a single output file.
+   * Should support unlimited number of input files, using recursive algorithm if necessary.
+   *
+   * After the output file is created, all input files should be deleted.
+   *
+   * @experimental
+   */
+  combine: (
+    bucketName: string,
+    filePaths: string[],
+    toPath: string,
+    toBucket?: string,
+  ) => Promise<void>
+
+  /**
+   * Acquire a "signed url", which allows bearer to use it to download ('read') the file.
+   *
+   * @experimental
+   */
+  getSignedUrl: (bucketName: string, filePath: string, expires: LocalTimeInput) => Promise<string>
 }

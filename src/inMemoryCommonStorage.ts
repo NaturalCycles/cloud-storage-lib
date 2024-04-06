@@ -1,6 +1,14 @@
 import { Readable, Writable } from 'node:stream'
-import { _stringMapEntries, _substringAfterLast, StringMap } from '@naturalcycles/js-lib'
-import { fs2, ReadableTyped } from '@naturalcycles/nodejs-lib'
+import {
+  _assert,
+  _isTruthy,
+  _stringMapEntries,
+  _substringAfterLast,
+  localTime,
+  LocalTimeInput,
+  StringMap,
+} from '@naturalcycles/js-lib'
+import { fs2, md5, ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 
 export class InMemoryCommonStorage implements CommonStorage {
@@ -35,8 +43,12 @@ export class InMemoryCommonStorage implements CommonStorage {
   }
 
   async deletePath(bucketName: string, prefix: string): Promise<void> {
+    await this.deletePaths(bucketName, [prefix])
+  }
+
+  async deletePaths(bucketName: string, prefixes: string[]): Promise<void> {
     Object.keys(this.data[bucketName] || {}).forEach(filePath => {
-      if (filePath.startsWith(prefix)) {
+      if (prefixes.some(prefix => filePath.startsWith(prefix))) {
         delete this.data[bucketName]![filePath]
       }
     })
@@ -141,5 +153,33 @@ export class InMemoryCommonStorage implements CommonStorage {
       this.data[tob]![toPrefix + filePath.slice(fromPrefix.length)] = v
       delete this.data[fromBucket]![filePath]
     })
+  }
+
+  async combine(
+    bucketName: string,
+    filePaths: string[],
+    toPath: string,
+    toBucket?: string,
+  ): Promise<void> {
+    if (!this.data[bucketName]) return
+    const tob = toBucket || bucketName
+    this.data[tob] ||= {}
+    this.data[tob]![toPath] = Buffer.concat(
+      filePaths.map(p => this.data[bucketName]![p]).filter(_isTruthy),
+    )
+
+    // delete source files
+    filePaths.forEach(p => delete this.data[bucketName]![p])
+  }
+
+  async getSignedUrl(
+    bucketName: string,
+    filePath: string,
+    expires: LocalTimeInput,
+  ): Promise<string> {
+    const buf = this.data[bucketName]?.[filePath]
+    _assert(buf, `getSignedUrl file not found: ${bucketName}/${filePath}`)
+    const signature = md5(buf)
+    return `https://testurl.com/${bucketName}/${filePath}?expires=${localTime(expires).unix()}&signature=${signature}`
   }
 }

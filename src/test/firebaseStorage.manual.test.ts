@@ -1,5 +1,5 @@
 import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
-import * as admin from 'firebase-admin'
+import admin from 'firebase-admin'
 import { CloudStorage } from '../cloudStorage'
 import { runCommonStorageTest } from '../testing/commonStorageTest'
 

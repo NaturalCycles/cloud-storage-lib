@@ -1,5 +1,5 @@
 import { Readable, Writable } from 'node:stream'
-import { _substringAfterLast, StringMap } from '@naturalcycles/js-lib'
+import { _stringMapEntries, _substringAfterLast, StringMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 
@@ -115,5 +115,22 @@ export class InMemoryCommonStorage implements CommonStorage {
     this.data[tob] ||= {}
     this.data[tob]![toPath] = this.data[fromBucket]![fromPath]
     delete this.data[fromBucket]![fromPath]
+  }
+
+  async movePath(
+    fromBucket: string,
+    fromPrefix: string,
+    toPrefix: string,
+    toBucket?: string,
+  ): Promise<void> {
+    const tob = toBucket || fromBucket
+    this.data[fromBucket] ||= {}
+    this.data[tob] ||= {}
+
+    _stringMapEntries(this.data[fromBucket]!).forEach(([filePath, v]) => {
+      if (!filePath.startsWith(fromPrefix)) return
+      this.data[tob]![toPrefix + filePath.slice(fromPrefix.length)] = v
+      delete this.data[fromBucket]![filePath]
+    })
   }
 }

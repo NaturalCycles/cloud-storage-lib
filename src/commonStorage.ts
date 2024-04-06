@@ -97,10 +97,24 @@ export interface CommonStorage {
     toPath: string,
     toBucket?: string,
   ) => Promise<void>
+
   moveFile: (
     fromBucket: string,
     fromPath: string,
     toPath: string,
+    toBucket?: string,
+  ) => Promise<void>
+
+  /**
+   * Allows to move "directory" with all its contents.
+   *
+   * Prefixes should end with `/` to work properly,
+   * otherwise some folder that starts with the same prefix will be included.
+   */
+  movePath: (
+    fromBucket: string,
+    fromPrefix: string,
+    toPrefix: string,
     toBucket?: string,
   ) => Promise<void>
 }

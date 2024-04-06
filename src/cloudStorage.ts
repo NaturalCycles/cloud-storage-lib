@@ -1,7 +1,13 @@
 import { Readable, Writable } from 'node:stream'
 import { File, Storage, StorageOptions } from '@google-cloud/storage'
-import { _substringAfterLast } from '@naturalcycles/js-lib'
-import { ReadableTyped, transformMap, transformMapSimple } from '@naturalcycles/nodejs-lib'
+import { _assert, _substringAfterLast, SKIP } from '@naturalcycles/js-lib'
+import {
+  _pipeline,
+  ReadableTyped,
+  transformMap,
+  transformMapSync,
+  writableForEach,
+} from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 import { GCPServiceAccount } from './model'
 
@@ -77,10 +83,12 @@ export class CloudStorage implements CommonStorage {
     })
 
     if (fullPaths) {
-      return files.map(f => f.name)
+      // Paths that end with `/` are "folders", which are "virtual" in CloudStorage
+      // It doesn't make sense to return or do anything with them
+      return files.map(f => f.name).filter(s => !s.endsWith('/'))
     }
 
-    return files.map(f => _substringAfterLast(f.name, '/'))
+    return files.map(f => _substringAfterLast(f.name, '/')).filter(Boolean)
   }
 
   getFileNamesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<string> {
@@ -92,11 +100,7 @@ export class CloudStorage implements CommonStorage {
         prefix,
         maxResults: opt.limit || undefined,
       })
-      .pipe(
-        transformMapSimple<File, string>(f =>
-          fullPaths ? f.name : _substringAfterLast(f.name, '/'),
-        ),
-      )
+      .pipe(transformMapSync<File, string>(f => this.normalizeFilename(f.name, fullPaths)))
   }
 
   getFilesStream(bucketName: string, opt: CommonStorageGetOptions = {}): ReadableTyped<FileEntry> {
@@ -110,8 +114,11 @@ export class CloudStorage implements CommonStorage {
       })
       .pipe(
         transformMap<File, FileEntry>(async f => {
+          const filePath = this.normalizeFilename(f.name, fullPaths)
+          if (filePath === SKIP) return SKIP
+
           const [content] = await f.download()
-          return { filePath: fullPaths ? f.name : _substringAfterLast(f.name, '/'), content }
+          return { filePath, content }
         }),
       )
   }
@@ -176,5 +183,40 @@ export class CloudStorage implements CommonStorage {
       .bucket(fromBucket)
       .file(fromPath)
       .move(this.storage.bucket(toBucket || fromBucket).file(toPath))
+  }
+
+  async movePath(
+    fromBucket: string,
+    fromPrefix: string,
+    toPrefix: string,
+    toBucket?: string,
+  ): Promise<void> {
+    _assert(fromPrefix.endsWith('/'), 'fromPrefix should end with `/`')
+    _assert(toPrefix.endsWith('/'), 'toPrefix should end with `/`')
+
+    await _pipeline([
+      this.storage.bucket(fromBucket).getFilesStream({
+        prefix: fromPrefix,
+      }),
+      writableForEach<File>(async file => {
+        const { name } = file
+        const newName = toPrefix + name.slice(fromPrefix.length)
+        await file.move(this.storage.bucket(toBucket || fromBucket).file(newName))
+      }),
+    ])
+  }
+
+  /**
+   * Returns SKIP if fileName is a folder.
+   * If !fullPaths - strip away the folder prefix.
+   */
+  private normalizeFilename(fileName: string, fullPaths: boolean): string | typeof SKIP {
+    if (fullPaths) {
+      if (fileName.endsWith('/')) return SKIP // skip folders
+      return fileName
+    }
+
+    fileName = _substringAfterLast(fileName, '/')
+    return fileName || SKIP // skip folders
   }
 }

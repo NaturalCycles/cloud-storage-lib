@@ -1,6 +1,12 @@
 import { Readable, Writable } from 'node:stream'
 import { File, Storage, StorageOptions } from '@google-cloud/storage'
-import { _assert, _substringAfterLast, SKIP } from '@naturalcycles/js-lib'
+import {
+  _assert,
+  _substringAfterLast,
+  localTime,
+  LocalTimeInput,
+  SKIP,
+} from '@naturalcycles/js-lib'
 import {
   _pipeline,
   ReadableTyped,
@@ -33,6 +39,11 @@ export interface CloudStorageCfg {
   credentials?: GCPServiceAccount
 }
 
+/**
+ * CloudStorage implementation of CommonStorage API.
+ *
+ * API: https://googleapis.dev/nodejs/storage/latest/index.html
+ */
 export class CloudStorage implements CommonStorage {
   /**
    * Passing the pre-created Storage allows to instantiate it from both
@@ -204,6 +215,29 @@ export class CloudStorage implements CommonStorage {
         await file.move(this.storage.bucket(toBucket || fromBucket).file(newName))
       }),
     ])
+  }
+
+  /**
+   * Acquires a "signed url", which allows bearer to use it to download ('read') the file.
+   *
+   * expires: 'v4' supports maximum duration of 7 days from now.
+   *
+   * @experimental - not tested yet
+   */
+  async getSignedUrl(
+    bucketName: string,
+    filePath: string,
+    expires: LocalTimeInput,
+  ): Promise<string> {
+    const [url] = await this.storage
+      .bucket(bucketName)
+      .file(filePath)
+      .getSignedUrl({
+        action: 'read',
+        expires: localTime(expires).unixMillis(),
+      })
+
+    return url
   }
 
   /**

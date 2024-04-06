@@ -87,6 +87,11 @@ export interface CommonStorage {
 
   getFileWriteStream: (bucketName: string, filePath: string) => Writable
 
+  /**
+   * Upload local file to the bucket (by streaming it).
+   */
+  uploadFile: (localFilePath: string, bucketName: string, bucketFilePath: string) => Promise<void>
+
   setFileVisibility: (bucketName: string, filePath: string, isPublic: boolean) => Promise<void>
 
   getFileVisibility: (bucketName: string, filePath: string) => Promise<boolean>

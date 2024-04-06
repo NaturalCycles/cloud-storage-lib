@@ -1,6 +1,6 @@
 import { Readable, Writable } from 'node:stream'
 import { _stringMapEntries, _substringAfterLast, StringMap } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import { fs2, ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 
 export class InMemoryCommonStorage implements CommonStorage {
@@ -81,6 +81,15 @@ export class InMemoryCommonStorage implements CommonStorage {
 
   getFileWriteStream(_bucketName: string, _filePath: string): Writable {
     throw new Error('Method not implemented.')
+  }
+
+  async uploadFile(
+    localFilePath: string,
+    bucketName: string,
+    bucketFilePath: string,
+  ): Promise<void> {
+    this.data[bucketName] ||= {}
+    this.data[bucketName]![bucketFilePath] = await fs2.readBufferAsync(localFilePath)
   }
 
   async setFileVisibility(bucketName: string, filePath: string, isPublic: boolean): Promise<void> {

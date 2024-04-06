@@ -163,6 +163,16 @@ export class CloudStorage implements CommonStorage {
     return this.storage.bucket(bucketName).file(filePath).createWriteStream()
   }
 
+  async uploadFile(
+    localFilePath: string,
+    bucketName: string,
+    bucketFilePath: string,
+  ): Promise<void> {
+    await this.storage.bucket(bucketName).upload(localFilePath, {
+      destination: bucketFilePath,
+    })
+  }
+
   async setFileVisibility(bucketName: string, filePath: string, isPublic: boolean): Promise<void> {
     await this.storage.bucket(bucketName).file(filePath)[isPublic ? 'makePublic' : 'makePrivate']()
   }

@@ -1,7 +1,7 @@
 {
   "name": "@naturalcycles/cloud-storage-lib",
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.0.0",
@@ -36,7 +36,7 @@
     "node": ">=18.12.0"
   },
   "version": "0.0.0",
-  "description": "",
+  "description": "CommonStorage implementation based on Google Cloud Storage",
   "author": "Natural Cycles Team",
   "license": "MIT"
 }

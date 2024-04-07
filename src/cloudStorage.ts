@@ -128,13 +128,18 @@ export class CloudStorage implements CommonStorage {
         prefix,
         maxResults: opt.limit || undefined,
       }) as ReadableTyped<File>
-    ).flatMap(async f => {
-      const filePath = this.normalizeFilename(f.name, fullPaths)
-      if (filePath === SKIP) return []
+    ).flatMap(
+      async f => {
+        const filePath = this.normalizeFilename(f.name, fullPaths)
+        if (filePath === SKIP) return []
 
-      const [content] = await f.download()
-      return [{ filePath, content }] as FileEntry[]
-    })
+        const [content] = await f.download()
+        return [{ filePath, content }] as FileEntry[]
+      },
+      {
+        concurrency: 16,
+      },
+    )
   }
 
   async getFile(bucketName: string, filePath: string): Promise<Buffer | null> {

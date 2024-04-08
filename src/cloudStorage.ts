@@ -2,7 +2,10 @@ import { Readable, Writable } from 'node:stream'
 import { File, Storage, StorageOptions } from '@google-cloud/storage'
 import {
   _assert,
+  _chunk,
+  _since,
   _substringAfterLast,
+  CommonLogger,
   localTime,
   LocalTimeInput,
   pMap,
@@ -18,6 +21,9 @@ export {
   type StorageOptions,
 }
 
+const MAX_RECURSION_DEPTH = 10
+const BATCH_SIZE = 32
+
 /**
  * This object is intentionally made to NOT extend StorageOptions,
  * because StorageOptions is complicated and provides just too many ways
@@ -29,9 +35,14 @@ export {
  */
 export interface CloudStorageCfg {
   /**
-   * It's optional, to allow automatic credentials in AppEngine, or GOOGLE_APPLICATION_CREDENTIALS.
+   * Default is console
    */
-  credentials?: GCPServiceAccount
+  logger?: CommonLogger
+
+  /**
+   * Pass true for extra debugging
+   */
+  debug?: boolean
 }
 
 /**
@@ -40,29 +51,51 @@ export interface CloudStorageCfg {
  * API: https://googleapis.dev/nodejs/storage/latest/index.html
  */
 export class CloudStorage implements CommonStorage {
-  /**
-   * Passing the pre-created Storage allows to instantiate it from both
-   * GCP Storage and FirebaseStorage.
-   */
-  constructor(public storage: Storage) {}
+  private constructor(
+    public storage: Storage,
+    cfg: CloudStorageCfg = {},
+  ) {
+    this.cfg = {
+      logger: console,
+      ...cfg,
+    }
+  }
 
-  static createFromGCPServiceAccount(cfg: CloudStorageCfg): CloudStorage {
+  cfg: CloudStorageCfg & {
+    logger: CommonLogger
+  }
+
+  static createFromGCPServiceAccount(
+    credentials?: GCPServiceAccount,
+    cfg?: CloudStorageCfg,
+  ): CloudStorage {
     const storage = new Storage({
-      credentials: cfg.credentials,
+      credentials,
       // Explicitly passing it here to fix this error:
       // Error: Unable to detect a Project Id in the current environment.
       // To learn more about authentication and Google APIs, visit:
       // https://cloud.google.com/docs/authentication/getting-started
       //     at /root/repo/node_modules/google-auth-library/build/src/auth/googleauth.js:95:31
-      projectId: cfg.credentials?.project_id,
+      projectId: credentials?.project_id,
     })
 
-    return new CloudStorage(storage)
+    return new CloudStorage(storage, cfg)
   }
 
-  static createFromStorageOptions(storageOptions?: StorageOptions): CloudStorage {
+  static createFromStorageOptions(
+    storageOptions?: StorageOptions,
+    cfg?: CloudStorageCfg,
+  ): CloudStorage {
     const storage = new Storage(storageOptions)
-    return new CloudStorage(storage)
+    return new CloudStorage(storage, cfg)
+  }
+
+  /**
+   * Passing the pre-created Storage allows to instantiate it from both
+   * GCP Storage and FirebaseStorage.
+   */
+  static createFromStorage(storage: Storage, cfg?: CloudStorageCfg): CloudStorage {
+    return new CloudStorage(storage, cfg)
   }
 
   async ping(bucketName?: string): Promise<void> {
@@ -235,21 +268,81 @@ export class CloudStorage implements CommonStorage {
       })
   }
 
-  async combine(
+  async deleteFiles(bucketName: string, filePaths: string[]): Promise<void> {
+    await pMap(filePaths, async filePath => {
+      await this.storage.bucket(bucketName).file(filePath).delete()
+    })
+  }
+
+  async combineFiles(
     bucketName: string,
     filePaths: string[],
     toPath: string,
     toBucket?: string,
+    currentRecursionDepth = 0, // not to be set publicly, only used internally
   ): Promise<void> {
-    // todo: if (filePaths.length > 32) - use recursive algorithm
-    _assert(filePaths.length <= 32, 'combine supports up to 32 input files')
+    _assert(
+      currentRecursionDepth <= MAX_RECURSION_DEPTH,
+      `combineFiles reached max recursion depth of ${MAX_RECURSION_DEPTH}`,
+    )
+    const { logger, debug } = this.cfg
 
-    await this.storage
-      .bucket(bucketName)
-      .combine(filePaths, this.storage.bucket(toBucket || bucketName).file(toPath))
+    if (debug) {
+      logger.log(
+        `[${currentRecursionDepth}] Will compose ${filePaths.length} files, by batches of ${BATCH_SIZE}`,
+      )
+    }
 
-    // Delete original files
-    await this.deletePaths(bucketName, filePaths)
+    const intermediateFiles: string[] = []
+
+    if (filePaths.length <= BATCH_SIZE) {
+      await this.storage
+        .bucket(bucketName)
+        .combine(filePaths, this.storage.bucket(toBucket || bucketName).file(toPath))
+
+      if (debug) {
+        logger.log(`[${currentRecursionDepth}] Composed into ${toPath}!`)
+      }
+
+      await this.deleteFiles(bucketName, filePaths)
+      return
+    }
+
+    const started = Date.now()
+    await pMap(_chunk(filePaths, BATCH_SIZE), async (fileBatch, i) => {
+      if (debug) {
+        logger.log(`[${currentRecursionDepth}] Composing batch ${i + 1}...`)
+      }
+      const intermediateFile = `temp_${currentRecursionDepth}_${i}`
+      await this.storage
+        .bucket(bucketName)
+        .combine(fileBatch, this.storage.bucket(toBucket || bucketName).file(intermediateFile))
+      intermediateFiles.push(intermediateFile)
+      await this.deleteFiles(bucketName, fileBatch)
+    })
+    if (debug) {
+      logger.log(
+        `[${currentRecursionDepth}] Batch composed into ${intermediateFiles.length} files, in ${_since(started)}`,
+      )
+    }
+
+    await this.combineFiles(
+      toBucket || bucketName,
+      intermediateFiles,
+      toPath,
+      toBucket,
+      currentRecursionDepth + 1,
+    )
+  }
+
+  async combine(
+    bucketName: string,
+    prefix: string,
+    toPath: string,
+    toBucket?: string,
+  ): Promise<void> {
+    const filePaths = await this.getFileNames(bucketName, { prefix })
+    await this.combineFiles(bucketName, filePaths, toPath, toBucket)
   }
 
   /**

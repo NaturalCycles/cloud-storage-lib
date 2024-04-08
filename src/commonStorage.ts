@@ -70,6 +70,11 @@ export interface CommonStorage {
   deletePaths: (bucketName: string, prefixes: string[]) => Promise<void>
 
   /**
+   * Should delete all files by their paths.
+   */
+  deleteFiles: (bucketName: string, filePaths: string[]) => Promise<void>
+
+  /**
    * Returns an array of strings which are file paths.
    * Files that are not found by the path are not present in the map.
    *
@@ -134,12 +139,17 @@ export interface CommonStorage {
    *
    * @experimental
    */
-  combine: (
+  combineFiles: (
     bucketName: string,
     filePaths: string[],
     toPath: string,
     toBucket?: string,
   ) => Promise<void>
+
+  /**
+   * Like `combineFiles`, but for a `prefix`.
+   */
+  combine: (bucketName: string, prefix: string, toPath: string, toBucket?: string) => Promise<void>
 
   /**
    * Acquire a "signed url", which allows bearer to use it to download ('read') the file.

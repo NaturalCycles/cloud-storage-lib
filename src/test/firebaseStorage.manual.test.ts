@@ -15,7 +15,7 @@ const app = admin.initializeApp({
   // storageBucket: FIREBASE_BUCKET,
 })
 
-const storage = new CloudStorage(app.storage() as any)
+const storage = CloudStorage.createFromStorage(app.storage() as any)
 
 describe(`runCommonStorageTest`, () => runCommonStorageTest(storage, FIREBASE_BUCKET))
 

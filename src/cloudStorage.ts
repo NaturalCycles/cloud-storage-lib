@@ -240,6 +240,22 @@ export class CloudStorage implements CommonStorage {
       })
   }
 
+  async deleteFiles(
+    bucketName: string,
+    filePaths: string[],
+    concurrency: number = 8,
+  ): Promise<void> {
+    await pMap(
+      filePaths,
+      async filePath => {
+        await this.storage.bucket(bucketName).file(filePath).delete()
+      },
+      {
+        concurrency,
+      },
+    )
+  }
+
   async combine(
     bucketName: string,
     filePaths: string[],
@@ -250,6 +266,8 @@ export class CloudStorage implements CommonStorage {
     if (recursionDepth > MAX_RECURSION_DEPTH) {
       throw new Error(`Too many recursive calls: ${recursionDepth} (max: ${MAX_RECURSION_DEPTH})`)
     }
+    // console.log("waiting 2 minutes")
+    // await new Promise(resolve => setTimeout(resolve, 120000)); // Sleep for 2 minutes
 
     console.log(
       `[${recursionDepth}] Will compose ${filePaths.length} files, by batches of ${BATCH_SIZE}`,
@@ -261,7 +279,7 @@ export class CloudStorage implements CommonStorage {
         .combine(filePaths, this.storage.bucket(toBucket || bucketName).file(toPath))
       console.log(`[${recursionDepth}] Composed into ${toPath}!`)
 
-      await this.deletePaths(bucketName, filePaths)
+      await this.deleteFiles(bucketName, filePaths)
       return
     }
     const started = Date.now()
@@ -274,15 +292,16 @@ export class CloudStorage implements CommonStorage {
           .bucket(bucketName)
           .combine(fileBatch, this.storage.bucket(toBucket || bucketName).file(intermediateFile))
         intermediateFiles.push(intermediateFile)
-        await this.deletePaths(bucketName, fileBatch)
+        await this.deleteFiles(bucketName, fileBatch)
       },
       {
         concurrency: 8,
       },
     )
-    console.log(`[${recursionDepth}] Batch composed in ${_since(started)}ms`)
+    console.log(
+      `[${recursionDepth}] Batch composed into ${intermediateFiles.length} files, in ${_since(started)}`,
+    )
 
-    console.log(`[${recursionDepth}] Composed into ${intermediateFiles.length} intermediate files`)
     await this.combine(
       toBucket || bucketName,
       intermediateFiles,
@@ -290,13 +309,6 @@ export class CloudStorage implements CommonStorage {
       toBucket,
       recursionDepth + 1,
     )
-
-    await this.storage
-      .bucket(bucketName)
-      .combine(filePaths, this.storage.bucket(toBucket || bucketName).file(toPath))
-
-    // Delete original files
-    await this.deletePaths(bucketName, filePaths)
   }
 
   async combineAll(

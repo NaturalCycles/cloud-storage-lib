@@ -2,6 +2,8 @@ import { Readable, Writable } from 'node:stream'
 import { File, Storage, StorageOptions } from '@google-cloud/storage'
 import {
   _assert,
+  _chunk,
+  _since,
   _substringAfterLast,
   localTime,
   LocalTimeInput,
@@ -17,6 +19,9 @@ export {
   Storage,
   type StorageOptions,
 }
+
+const MAX_RECURSION_DEPTH = 10
+const BATCH_SIZE = 32
 
 /**
  * This object is intentionally made to NOT extend StorageOptions,
@@ -240,9 +245,51 @@ export class CloudStorage implements CommonStorage {
     filePaths: string[],
     toPath: string,
     toBucket?: string,
+    recursionDepth: number = 0,
   ): Promise<void> {
-    // todo: if (filePaths.length > 32) - use recursive algorithm
-    _assert(filePaths.length <= 32, 'combine supports up to 32 input files')
+    if (recursionDepth > MAX_RECURSION_DEPTH) {
+      throw new Error(`Too many recursive calls: ${recursionDepth} (max: ${MAX_RECURSION_DEPTH})`)
+    }
+
+    console.log(
+      `[${recursionDepth}] Will compose ${filePaths.length} files, by batches of ${BATCH_SIZE}`,
+    )
+    const intermediateFiles: string[] = []
+    if (filePaths.length <= BATCH_SIZE) {
+      await this.storage
+        .bucket(bucketName)
+        .combine(filePaths, this.storage.bucket(toBucket || bucketName).file(toPath))
+      console.log(`[${recursionDepth}] Composed into ${toPath}!`)
+
+      await this.deletePaths(bucketName, filePaths)
+      return
+    }
+    const started = Date.now()
+    await pMap(
+      _chunk(filePaths, BATCH_SIZE),
+      async (fileBatch: string[], i: number) => {
+        console.log(`[${recursionDepth}] Composing batch ${i + 1}...`)
+        const intermediateFile = `temp_${recursionDepth}_${i}`
+        await this.storage
+          .bucket(bucketName)
+          .combine(fileBatch, this.storage.bucket(toBucket || bucketName).file(intermediateFile))
+        intermediateFiles.push(intermediateFile)
+        await this.deletePaths(bucketName, fileBatch)
+      },
+      {
+        concurrency: 8,
+      },
+    )
+    console.log(`[${recursionDepth}] Batch composed in ${_since(started)}ms`)
+
+    console.log(`[${recursionDepth}] Composed into ${intermediateFiles.length} intermediate files`)
+    await this.combine(
+      toBucket || bucketName,
+      intermediateFiles,
+      toPath,
+      toBucket,
+      recursionDepth + 1,
+    )
 
     await this.storage
       .bucket(bucketName)
@@ -250,6 +297,16 @@ export class CloudStorage implements CommonStorage {
 
     // Delete original files
     await this.deletePaths(bucketName, filePaths)
+  }
+
+  async combineAll(
+    bucketName: string,
+    prefix: string,
+    toPath: string,
+    toBucket?: string,
+  ): Promise<void> {
+    const filePaths = await this.getFileNames(bucketName, { prefix })
+    await this.combine(bucketName, filePaths, toPath, toBucket)
   }
 
   /**

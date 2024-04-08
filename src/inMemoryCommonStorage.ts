@@ -172,6 +172,16 @@ export class InMemoryCommonStorage implements CommonStorage {
     filePaths.forEach(p => delete this.data[bucketName]![p])
   }
 
+  async combineAll(
+    bucketName: string,
+    prefix: string,
+    toPath: string,
+    toBucket?: string,
+  ): Promise<void> {
+    const filePaths = await this.getFileNames(bucketName, { prefix })
+    await this.combine(bucketName, filePaths, toPath, toBucket)
+  }
+
   async getSignedUrl(
     bucketName: string,
     filePath: string,

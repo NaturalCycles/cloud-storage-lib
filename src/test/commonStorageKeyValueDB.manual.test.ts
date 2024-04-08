@@ -10,9 +10,7 @@ const { bucketName, GCP_SERVICE_ACCOUNT: serviceAccountStr } = requireEnvKeys(
 )
 const serviceAccount: GCPServiceAccount = JSON.parse(serviceAccountStr)
 
-const storage = CloudStorage.createFromGCPServiceAccount({
-  credentials: serviceAccount,
-})
+const storage = CloudStorage.createFromGCPServiceAccount(serviceAccount)
 
 const db = new CommonStorageKeyValueDB({
   storage,

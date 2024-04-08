@@ -9,9 +9,7 @@ const { bucketName, GCP_SERVICE_ACCOUNT: serviceAccountStr } = requireEnvKeys(
 )
 const serviceAccount: GCPServiceAccount = JSON.parse(serviceAccountStr)
 
-const storage = CloudStorage.createFromGCPServiceAccount({
-  credentials: serviceAccount,
-})
+const storage = CloudStorage.createFromGCPServiceAccount(serviceAccount)
 
 // const TEST_FOLDER = 'test/subdir'
 //

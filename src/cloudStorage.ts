@@ -1,5 +1,7 @@
-import { Readable, Writable } from 'node:stream'
-import { File, Storage, StorageOptions } from '@google-cloud/storage'
+// eslint-disable-next-line import/no-duplicates
+import type { File, Storage, StorageOptions } from '@google-cloud/storage'
+// eslint-disable-next-line import/no-duplicates
+import type * as StorageLib from '@google-cloud/storage'
 import {
   _assert,
   _chunk,
@@ -11,13 +13,13 @@ import {
   pMap,
   SKIP,
 } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
-import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
-import { GCPServiceAccount } from './model'
+import type { ReadableBinary, ReadableTyped, WritableBinary } from '@naturalcycles/nodejs-lib'
+import type { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
+import type { GCPServiceAccount } from './model'
 
 export {
   // This is the latest version, to be imported by consumers
-  Storage,
+  type Storage,
   type StorageOptions,
 }
 
@@ -69,7 +71,9 @@ export class CloudStorage implements CommonStorage {
     credentials?: GCPServiceAccount,
     cfg?: CloudStorageCfg,
   ): CloudStorage {
-    const storage = new Storage({
+    const storageLib = require('@google-cloud/storage') as typeof StorageLib
+
+    const storage = new storageLib.Storage({
       credentials,
       // Explicitly passing it here to fix this error:
       // Error: Unable to detect a Project Id in the current environment.
@@ -86,7 +90,8 @@ export class CloudStorage implements CommonStorage {
     storageOptions?: StorageOptions,
     cfg?: CloudStorageCfg,
   ): CloudStorage {
-    const storage = new Storage(storageOptions)
+    const storageLib = require('@google-cloud/storage') as typeof StorageLib
+    const storage = new storageLib.Storage(storageOptions)
     return new CloudStorage(storage, cfg)
   }
 
@@ -192,7 +197,7 @@ export class CloudStorage implements CommonStorage {
    * Returns a Readable that is NOT object mode,
    * so you can e.g pipe it to fs.createWriteStream()
    */
-  getFileReadStream(bucketName: string, filePath: string): Readable {
+  getFileReadStream(bucketName: string, filePath: string): ReadableBinary {
     return this.storage.bucket(bucketName).file(filePath).createReadStream()
   }
 
@@ -200,7 +205,7 @@ export class CloudStorage implements CommonStorage {
     await this.storage.bucket(bucketName).file(filePath).save(content)
   }
 
-  getFileWriteStream(bucketName: string, filePath: string): Writable {
+  getFileWriteStream(bucketName: string, filePath: string): WritableBinary {
     return this.storage.bucket(bucketName).file(filePath).createWriteStream()
   }
 

@@ -1,6 +1,5 @@
-import { Readable, Writable } from 'node:stream'
-import { LocalTimeInput } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import type { LocalTimeInput } from '@naturalcycles/js-lib'
+import type { ReadableBinary, ReadableTyped, WritableBinary } from '@naturalcycles/nodejs-lib'
 
 export interface FileEntry {
   filePath: string
@@ -91,9 +90,9 @@ export interface CommonStorage {
 
   getFilesStream: (bucketName: string, opt?: CommonStorageGetOptions) => ReadableTyped<FileEntry>
 
-  getFileReadStream: (bucketName: string, filePath: string) => Readable
+  getFileReadStream: (bucketName: string, filePath: string) => ReadableBinary
 
-  getFileWriteStream: (bucketName: string, filePath: string) => Writable
+  getFileWriteStream: (bucketName: string, filePath: string) => WritableBinary
 
   /**
    * Upload local file to the bucket (by streaming it).

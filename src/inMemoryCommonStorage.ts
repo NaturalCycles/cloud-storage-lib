@@ -54,6 +54,12 @@ export class InMemoryCommonStorage implements CommonStorage {
     })
   }
 
+  async deleteFiles(bucketName: string, filePaths: string[]): Promise<void> {
+    filePaths.forEach(filePath => {
+      delete this.data[bucketName]![filePath]
+    })
+  }
+
   async getFileNames(bucketName: string, opt: CommonStorageGetOptions = {}): Promise<string[]> {
     const { prefix = '', fullPaths = true } = opt
     return Object.keys(this.data[bucketName] || {})

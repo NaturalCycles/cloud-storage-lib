@@ -70,6 +70,11 @@ export interface CommonStorage {
   deletePaths: (bucketName: string, prefixes: string[]) => Promise<void>
 
   /**
+   * Should delete all files by their paths.
+   */
+  deleteFiles: (bucketName: string, filePaths: string[]) => Promise<void>
+
+  /**
    * Returns an array of strings which are file paths.
    * Files that are not found by the path are not present in the map.
    *

@@ -291,6 +291,12 @@ export class CloudStorage implements CommonStorage {
       `combineFiles reached max recursion depth of ${MAX_RECURSION_DEPTH}`,
     )
     const { logger, debug } = this.cfg
+    if (filePaths.length === 0) {
+      if (debug) {
+        logger.log(`[${currentRecursionDepth}] Nothing to compose, returning early!`)
+      }
+      return
+    }
 
     if (debug) {
       logger.log(

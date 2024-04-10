@@ -353,9 +353,6 @@ export class CloudStorage implements CommonStorage {
     toBucket?: string,
   ): Promise<void> {
     const filePaths = await this.getFileNames(bucketName, { prefix })
-    if (filePaths.length === 0) {
-      return
-    }
     await this.combineFiles(bucketName, filePaths, toPath, toBucket)
   }
 

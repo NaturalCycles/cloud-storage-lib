@@ -374,7 +374,7 @@ export class CloudStorage implements CommonStorage {
       .getSignedUrl({
         action: 'read',
         version: 'v4',
-        expires: localTime(expires).unixMillis(),
+        expires: localTime(expires).unixMillis,
       })
 
     return url

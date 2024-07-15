@@ -45,7 +45,7 @@ export class InMemoryCommonStorage implements CommonStorage {
 
   async saveFile(bucketName: string, filePath: string, content: Buffer): Promise<void> {
     this.data[bucketName] ||= {}
-    this.data[bucketName]![filePath] = content
+    this.data[bucketName][filePath] = content
   }
 
   async deletePath(bucketName: string, prefix: string): Promise<void> {
@@ -112,12 +112,12 @@ export class InMemoryCommonStorage implements CommonStorage {
     bucketFilePath: string,
   ): Promise<void> {
     this.data[bucketName] ||= {}
-    this.data[bucketName]![bucketFilePath] = await fs2.readBufferAsync(localFilePath)
+    this.data[bucketName][bucketFilePath] = await fs2.readBufferAsync(localFilePath)
   }
 
   async setFileVisibility(bucketName: string, filePath: string, isPublic: boolean): Promise<void> {
     this.publicMap[bucketName] ||= {}
-    this.publicMap[bucketName]![filePath] = isPublic
+    this.publicMap[bucketName][filePath] = isPublic
   }
 
   async getFileVisibility(bucketName: string, filePath: string): Promise<boolean> {
@@ -133,7 +133,7 @@ export class InMemoryCommonStorage implements CommonStorage {
     const tob = toBucket || fromBucket
     this.data[fromBucket] ||= {}
     this.data[tob] ||= {}
-    this.data[tob]![toPath] = this.data[fromBucket]![fromPath]
+    this.data[tob][toPath] = this.data[fromBucket][fromPath]
   }
 
   async moveFile(
@@ -145,8 +145,8 @@ export class InMemoryCommonStorage implements CommonStorage {
     const tob = toBucket || fromBucket
     this.data[fromBucket] ||= {}
     this.data[tob] ||= {}
-    this.data[tob]![toPath] = this.data[fromBucket]![fromPath]
-    delete this.data[fromBucket]![fromPath]
+    this.data[tob][toPath] = this.data[fromBucket][fromPath]
+    delete this.data[fromBucket][fromPath]
   }
 
   async movePath(
@@ -159,7 +159,7 @@ export class InMemoryCommonStorage implements CommonStorage {
     this.data[fromBucket] ||= {}
     this.data[tob] ||= {}
 
-    _stringMapEntries(this.data[fromBucket]!).forEach(([filePath, v]) => {
+    _stringMapEntries(this.data[fromBucket]).forEach(([filePath, v]) => {
       if (!filePath.startsWith(fromPrefix)) return
       this.data[tob]![toPrefix + filePath.slice(fromPrefix.length)] = v
       delete this.data[fromBucket]![filePath]
@@ -185,7 +185,7 @@ export class InMemoryCommonStorage implements CommonStorage {
     if (!this.data[bucketName]) return
     const tob = toBucket || bucketName
     this.data[tob] ||= {}
-    this.data[tob]![toPath] = Buffer.concat(
+    this.data[tob][toPath] = Buffer.concat(
       filePaths.map(p => this.data[bucketName]![p]).filter(_isTruthy),
     )
 
@@ -201,6 +201,6 @@ export class InMemoryCommonStorage implements CommonStorage {
     const buf = this.data[bucketName]?.[filePath]
     _assert(buf, `getSignedUrl file not found: ${bucketName}/${filePath}`)
     const signature = md5(buf)
-    return `https://testurl.com/${bucketName}/${filePath}?expires=${localTime(expires).unix()}&signature=${signature}`
+    return `https://testurl.com/${bucketName}/${filePath}?expires=${localTime(expires).unix}&signature=${signature}`
   }
 }

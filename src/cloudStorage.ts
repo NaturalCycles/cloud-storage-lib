@@ -1,6 +1,6 @@
-// eslint-disable-next-line import/no-duplicates
+// eslint-disable-next-line import-x/no-duplicates
 import type { File, Storage, StorageOptions } from '@google-cloud/storage'
-// eslint-disable-next-line import/no-duplicates
+// eslint-disable-next-line import-x/no-duplicates
 import type * as StorageLib from '@google-cloud/storage'
 import {
   _assert,
@@ -17,10 +17,10 @@ import type { ReadableBinary, ReadableTyped, WritableBinary } from '@naturalcycl
 import type { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
 import type { GCPServiceAccount } from './model'
 
-export {
+export type {
   // This is the latest version, to be imported by consumers
-  type Storage,
-  type StorageOptions,
+  Storage,
+  StorageOptions,
 }
 
 const MAX_RECURSION_DEPTH = 10

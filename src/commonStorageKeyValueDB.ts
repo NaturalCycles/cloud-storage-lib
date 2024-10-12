@@ -1,4 +1,9 @@
-import { CommonDBCreateOptions, CommonKeyValueDB, KeyValueDBTuple } from '@naturalcycles/db-lib'
+import {
+  CommonDBCreateOptions,
+  CommonKeyValueDB,
+  commonKeyValueDBFullSupport,
+  KeyValueDBTuple,
+} from '@naturalcycles/db-lib'
 import { AppError, pMap, StringMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { CommonStorage } from './commonStorage'
@@ -18,6 +23,11 @@ export interface CommonStorageKeyValueDBCfg {
  */
 export class CommonStorageKeyValueDB implements CommonKeyValueDB {
   constructor(public cfg: CommonStorageKeyValueDBCfg) {}
+
+  support = {
+    ...commonKeyValueDBFullSupport,
+    increment: false,
+  }
 
   async ping(): Promise<void> {
     await this.cfg.storage.ping(this.cfg.bucketName)
@@ -103,5 +113,12 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
 
   async increment(_table: string, _id: string, _by?: number): Promise<number> {
     throw new AppError('CommonStorageKeyValueDB.increment() is not implemented')
+  }
+
+  async incrementBatch(
+    _table: string,
+    _incrementMap: StringMap<number>,
+  ): Promise<StringMap<number>> {
+    throw new AppError('CommonStorageKeyValueDB.incrementBatch() is not implemented')
   }
 }

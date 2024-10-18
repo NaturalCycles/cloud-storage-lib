@@ -2,9 +2,10 @@ import {
   CommonDBCreateOptions,
   CommonKeyValueDB,
   commonKeyValueDBFullSupport,
+  KeyValueDBTuple,
 } from '@naturalcycles/db-lib'
 import { IncrementTuple } from '@naturalcycles/db-lib/dist/kv/commonKeyValueDB'
-import { AppError, KeyValueTuple, pMap, StringMap } from '@naturalcycles/js-lib'
+import { AppError, pMap, StringMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { CommonStorage } from './commonStorage'
 
@@ -64,7 +65,7 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
     })
   }
 
-  async getByIds<V>(table: string, ids: string[]): Promise<KeyValueTuple<string, V>[]> {
+  async getByIds(table: string, ids: string[]): Promise<KeyValueDBTuple[]> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
 
     const map: StringMap<Buffer> = {}
@@ -74,14 +75,14 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
       if (buf) map[id] = buf
     })
 
-    return ids.map(id => [id, map[id]] as KeyValueTuple<string, V>).filter(t => t[1])
+    return ids.map(id => [id, map[id]] as KeyValueDBTuple).filter(t => t[1])
   }
 
-  async saveBatch<V>(table: string, entries: KeyValueTuple<string, V>[]): Promise<void> {
+  async saveBatch(table: string, entries: KeyValueDBTuple[]): Promise<void> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
 
     await pMap(entries, async ([id, content]) => {
-      await this.cfg.storage.saveFile(bucketName, [prefix, id].join('/'), content as Buffer)
+      await this.cfg.storage.saveFile(bucketName, [prefix, id].join('/'), content)
     })
   }
 
@@ -91,18 +92,18 @@ export class CommonStorageKeyValueDB implements CommonKeyValueDB {
     return this.cfg.storage.getFileNamesStream(bucketName, { prefix, limit, fullPaths: false })
   }
 
-  streamValues<V>(table: string, limit?: number): ReadableTyped<V> {
+  streamValues(table: string, limit?: number): ReadableTyped<Buffer> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
 
-    return this.cfg.storage.getFilesStream(bucketName, { prefix, limit }).map(f => f.content as V)
+    return this.cfg.storage.getFilesStream(bucketName, { prefix, limit }).map(f => f.content)
   }
 
-  streamEntries<V>(table: string, limit?: number): ReadableTyped<KeyValueTuple<string, V>> {
+  streamEntries(table: string, limit?: number): ReadableTyped<KeyValueDBTuple> {
     const { bucketName, prefix } = this.getBucketAndPrefix(table)
 
     return this.cfg.storage
       .getFilesStream(bucketName, { prefix, limit, fullPaths: false })
-      .map(f => [f.filePath, f.content as V])
+      .map(f => [f.filePath, f.content])
   }
 
   async count(table: string): Promise<number> {

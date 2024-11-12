@@ -1,6 +1,4 @@
-// eslint-disable-next-line import-x/no-duplicates
 import type { File, Storage, StorageOptions } from '@google-cloud/storage'
-// eslint-disable-next-line import-x/no-duplicates
 import type * as StorageLib from '@google-cloud/storage'
 import {
   _assert,
@@ -12,6 +10,7 @@ import {
   LocalTimeInput,
   pMap,
   SKIP,
+  UnixTimestampMillis,
 } from '@naturalcycles/js-lib'
 import type { ReadableBinary, ReadableTyped, WritableBinary } from '@naturalcycles/nodejs-lib'
 import type { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
@@ -319,7 +318,7 @@ export class CloudStorage implements CommonStorage {
       return
     }
 
-    const started = Date.now()
+    const started = Date.now() as UnixTimestampMillis
     await pMap(_chunk(filePaths, BATCH_SIZE), async (fileBatch, i) => {
       if (debug) {
         logger.log(`[${currentRecursionDepth}] Composing batch ${i + 1}...`)

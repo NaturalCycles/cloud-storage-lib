@@ -1,8 +1,9 @@
-import { runCommonKeyValueDBTest } from '@naturalcycles/db-lib/dist/testing'
+import { runCommonKeyValueDBTest } from '@naturalcycles/db-lib/dist/testing/index.js'
 import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
-import { CloudStorage } from '../cloudStorage'
-import { CommonStorageKeyValueDB } from '../commonStorageKeyValueDB'
-import { GCPServiceAccount } from '../model'
+import { describe } from 'vitest'
+import { CloudStorage } from '../cloudStorage.js'
+import { CommonStorageKeyValueDB } from '../commonStorageKeyValueDB.js'
+import type { GCPServiceAccount } from '../model.js'
 
 const { bucketName, GCP_SERVICE_ACCOUNT: serviceAccountStr } = requireEnvKeys(
   'bucketName',
@@ -10,7 +11,7 @@ const { bucketName, GCP_SERVICE_ACCOUNT: serviceAccountStr } = requireEnvKeys(
 )
 const serviceAccount: GCPServiceAccount = JSON.parse(serviceAccountStr)
 
-const storage = CloudStorage.createFromGCPServiceAccount(serviceAccount)
+const storage = await CloudStorage.createFromGCPServiceAccount(serviceAccount)
 
 const db = new CommonStorageKeyValueDB({
   storage,

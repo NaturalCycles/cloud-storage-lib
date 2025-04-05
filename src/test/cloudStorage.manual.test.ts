@@ -1,7 +1,8 @@
 import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
-import { CloudStorage } from '../cloudStorage'
-import { GCPServiceAccount } from '../model'
-import { runCommonStorageTest } from '../testing/commonStorageTest'
+import { describe } from 'vitest'
+import { CloudStorage } from '../cloudStorage.js'
+import type { GCPServiceAccount } from '../model.js'
+import { runCommonStorageTest } from '../testing/commonStorageTest.js'
 
 const { bucketName, GCP_SERVICE_ACCOUNT: serviceAccountStr } = requireEnvKeys(
   'bucketName',
@@ -9,7 +10,7 @@ const { bucketName, GCP_SERVICE_ACCOUNT: serviceAccountStr } = requireEnvKeys(
 )
 const serviceAccount: GCPServiceAccount = JSON.parse(serviceAccountStr)
 
-const storage = CloudStorage.createFromGCPServiceAccount(serviceAccount)
+const storage = await CloudStorage.createFromGCPServiceAccount(serviceAccount)
 
 // const TEST_FOLDER = 'test/subdir'
 //

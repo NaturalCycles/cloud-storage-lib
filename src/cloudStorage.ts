@@ -1,20 +1,17 @@
 import type { File, Storage, StorageOptions } from '@google-cloud/storage'
-import type * as StorageLib from '@google-cloud/storage'
+import type { CommonLogger, LocalTimeInput, UnixTimestampMillis } from '@naturalcycles/js-lib'
 import {
   _assert,
   _chunk,
   _since,
   _substringAfterLast,
-  CommonLogger,
   localTime,
-  LocalTimeInput,
   pMap,
   SKIP,
-  UnixTimestampMillis,
 } from '@naturalcycles/js-lib'
 import type { ReadableBinary, ReadableTyped, WritableBinary } from '@naturalcycles/nodejs-lib'
-import type { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
-import type { GCPServiceAccount } from './model'
+import type { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage.js'
+import type { GCPServiceAccount } from './model.js'
 
 export type {
   // This is the latest version, to be imported by consumers
@@ -66,13 +63,13 @@ export class CloudStorage implements CommonStorage {
     logger: CommonLogger
   }
 
-  static createFromGCPServiceAccount(
+  static async createFromGCPServiceAccount(
     credentials?: GCPServiceAccount,
     cfg?: CloudStorageCfg,
-  ): CloudStorage {
-    const storageLib = require('@google-cloud/storage') as typeof StorageLib
+  ): Promise<CloudStorage> {
+    const { Storage } = await import('@google-cloud/storage')
 
-    const storage = new storageLib.Storage({
+    const storage = new Storage({
       credentials,
       // Explicitly passing it here to fix this error:
       // Error: Unable to detect a Project Id in the current environment.
@@ -85,12 +82,12 @@ export class CloudStorage implements CommonStorage {
     return new CloudStorage(storage, cfg)
   }
 
-  static createFromStorageOptions(
+  static async createFromStorageOptions(
     storageOptions?: StorageOptions,
     cfg?: CloudStorageCfg,
-  ): CloudStorage {
-    const storageLib = require('@google-cloud/storage') as typeof StorageLib
-    const storage = new storageLib.Storage(storageOptions)
+  ): Promise<CloudStorage> {
+    const { Storage } = await import('@google-cloud/storage')
+    const storage = new Storage(storageOptions)
     return new CloudStorage(storage, cfg)
   }
 

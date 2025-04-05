@@ -1,7 +1,8 @@
 import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
 import admin from 'firebase-admin'
-import { CloudStorage } from '../cloudStorage'
-import { runCommonStorageTest } from '../testing/commonStorageTest'
+import { describe, test } from 'vitest'
+import { CloudStorage } from '../cloudStorage.js'
+import { runCommonStorageTest } from '../testing/commonStorageTest.js'
 
 const { FIREBASE_SERVICE_ACCOUNT, FIREBASE_BUCKET } = requireEnvKeys(
   'FIREBASE_SERVICE_ACCOUNT',

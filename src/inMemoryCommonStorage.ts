@@ -1,21 +1,14 @@
+import type { LocalTimeInput, StringMap } from '@naturalcycles/js-lib'
 import {
   _assert,
   _isTruthy,
   _stringMapEntries,
   _substringAfterLast,
   localTime,
-  LocalTimeInput,
-  StringMap,
 } from '@naturalcycles/js-lib'
-import {
-  fs2,
-  md5,
-  ReadableBinary,
-  readableFrom,
-  ReadableTyped,
-  WritableBinary,
-} from '@naturalcycles/nodejs-lib'
-import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
+import type { ReadableBinary, ReadableTyped, WritableBinary } from '@naturalcycles/nodejs-lib'
+import { fs2, md5, readableFrom } from '@naturalcycles/nodejs-lib'
+import type { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage.js'
 
 export class InMemoryCommonStorage implements CommonStorage {
   /**

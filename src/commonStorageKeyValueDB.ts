@@ -1,13 +1,14 @@
-import {
+import type {
   CommonDBCreateOptions,
   CommonKeyValueDB,
-  commonKeyValueDBFullSupport,
   KeyValueDBTuple,
 } from '@naturalcycles/db-lib'
-import { IncrementTuple } from '@naturalcycles/db-lib/dist/kv/commonKeyValueDB'
-import { AppError, pMap, StringMap } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
-import { CommonStorage } from './commonStorage'
+import { commonKeyValueDBFullSupport } from '@naturalcycles/db-lib'
+import type { IncrementTuple } from '@naturalcycles/db-lib/dist/kv/commonKeyValueDB.js'
+import type { StringMap } from '@naturalcycles/js-lib'
+import { AppError, pMap } from '@naturalcycles/js-lib'
+import type { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import type { CommonStorage } from './commonStorage.js'
 
 export interface CommonStorageKeyValueDBCfg {
   storage: CommonStorage

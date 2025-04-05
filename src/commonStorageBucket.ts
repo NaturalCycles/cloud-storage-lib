@@ -1,7 +1,7 @@
-import { Readable, Writable } from 'node:stream'
+import type { Readable, Writable } from 'node:stream'
 import { AppError, pMap } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
-import { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage'
+import type { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import type { CommonStorage, CommonStorageGetOptions, FileEntry } from './commonStorage.js'
 
 export interface CommonStorageBucketCfg {
   storage: CommonStorage

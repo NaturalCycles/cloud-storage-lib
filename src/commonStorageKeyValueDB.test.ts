@@ -1,6 +1,7 @@
-import { runCommonKeyValueDBTest } from '@naturalcycles/db-lib/dist/testing'
-import { CommonStorageKeyValueDB } from './commonStorageKeyValueDB'
-import { InMemoryCommonStorage } from './inMemoryCommonStorage'
+import { runCommonKeyValueDBTest } from '@naturalcycles/db-lib/dist/testing/index.js'
+import { describe } from 'vitest'
+import { CommonStorageKeyValueDB } from './commonStorageKeyValueDB.js'
+import { InMemoryCommonStorage } from './inMemoryCommonStorage.js'
 
 const storage = new InMemoryCommonStorage()
 

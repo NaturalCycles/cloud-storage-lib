@@ -1,5 +1,7 @@
-import { _range, _substringAfterLast, pMap, StringMap } from '@naturalcycles/js-lib'
-import { CommonStorage, FileEntry } from '../commonStorage'
+import type { StringMap } from '@naturalcycles/js-lib'
+import { _range, _substringAfterLast, pMap } from '@naturalcycles/js-lib'
+import { expect, test } from 'vitest'
+import type { CommonStorage, FileEntry } from '../commonStorage.js'
 
 const TEST_FOLDER = 'test/subdir'
 

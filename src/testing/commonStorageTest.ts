@@ -1,6 +1,5 @@
 import type { StringMap } from '@naturalcycles/js-lib'
 import { _range, _substringAfterLast, pMap } from '@naturalcycles/js-lib'
-import { expect, test } from 'vitest'
 import type { CommonStorage, FileEntry } from '../commonStorage.js'
 
 const TEST_FOLDER = 'test/subdir'
@@ -33,7 +32,13 @@ const TEST_FILES: FileEntry[] = [TEST_ITEMS, TEST_ITEMS2, TEST_ITEMS3].map((obj,
 /**
  * This test suite must be idempotent.
  */
-export function runCommonStorageTest(storage: CommonStorage, bucketName: string): void {
+export async function runCommonStorageTest(
+  storage: CommonStorage,
+  bucketName: string,
+): Promise<void> {
+  // this is because vitest cannot be "required" from cjs
+  const { test, expect } = await import('vitest')
+
   // test('createBucket', async () => {
   //   await storage.createBucket(bucketName)
   // })
